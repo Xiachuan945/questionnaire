@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,11 +14,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.questionnaire.entity.User;
 import com.example.questionnaire.service.ifs.QuizService;
+import com.example.questionnaire.vo.QuestionRes;
 import com.example.questionnaire.vo.QuestionnaireRes;
+import com.example.questionnaire.vo.QuizId;
 import com.example.questionnaire.vo.QuizRequest;
 import com.example.questionnaire.vo.QuizResponse;
 import com.example.questionnaire.vo.QuizSearchRequest;
+import com.example.questionnaire.vo.UserReq;
+import com.example.questionnaire.vo.UserRes;
 
 @RestController
 @CrossOrigin
@@ -47,16 +53,34 @@ public class QuizController {
 		return service.search(title, startDate, endDate) ;
 	}
 	
+	// 資料庫拿前端問卷對應的 quId 資料 (自建方法)
+//	@GetMapping(value = "api/quiz/getQuId")
+//	public QuizResponse getQuId(@RequestBody QuizId quizid) {
+//		return service.getQuId(quizid.getQuId()) ;
+//	}
+	
 	// 刪除問卷
+//	@PostMapping(value = "api/quiz/deleteQuestionnaire") 
+//	public QuizResponse deleteQuestionnaire(@RequestBody List<Integer> qnidList) {
+//		return service.deleteQuestionnaire(qnidList) ;
+//	}	
+	
+	// 刪除問卷 (另建 QuizId 設定 qnList. quList . qnId )
 	@PostMapping(value = "api/quiz/deleteQuestionnaire") 
-	public QuizResponse deleteQuestionnaire(@RequestBody List<Integer> qnidList) {
-		return service.deleteQuestionnaire(qnidList) ;
+	public QuizResponse deleteQuestionnaire(@RequestBody QuizId quizid) {
+		return service.deleteQuestionnaire(quizid.getQnList()) ;
 	}	
 
 	// 刪問卷底下的題目
+//	@PostMapping(value = "api/quiz/deleteQuestion")
+//	public QuizResponse deleteQuestion(@RequestBody int qnId , List<Integer> quIdList) {
+//		return service.deleteQuestion(qnId, quIdList) ;
+//	}
+	
+	// 刪問卷底下的題目 (另建 QuizId 設定 qnList. quList . qnId )
 	@PostMapping(value = "api/quiz/deleteQuestion")
-	public QuizResponse deleteQuestion(@RequestBody int qnId , List<Integer> quIdList) {
-		return service.deleteQuestion(qnId, quIdList) ;
+	public QuizResponse deleteQuestion(@RequestBody QuizId quizid) {
+		return service.deleteQuestion(quizid.getQnId(), quizid.getQuList()) ;
 	}
 	
 	 // 搜尋列表裡的所有問卷(boolean是要查看是否發布)
@@ -74,6 +98,7 @@ public class QuizController {
 			endDate = endDate != null ? endDate : LocalDate.of(2099,01,01);
 			// 執行對資料庫要做的服務
 			return service.searchQuestionnaireList(title, startDate,endDate,isPublished);  
+	}
 
 	 // 搜尋列表裡的所有問卷(boolean是要查看是否發布)
 //	@GetMapping(value = "api/quiz/searchQuestionnaireList1")
@@ -84,14 +109,22 @@ public class QuizController {
 //		return service.searchQuestionnaireList(title, startDate, endDate, boolean) ;
 //	}
 
-	// 搜尋問卷裡的所有問題
-//	@GetMapping(value = "api/quiz/searchQuestionList")
-//	public QuizResponse searchQuestionList(@RequestBody int qnId) {
-//		return service.searchQuestionList(qnId) ;
-//	}
-	
-
+	 // 搜尋問卷裡的所有問題 (12/3將public後的QuizResponse改為QuestionRes)
+	@GetMapping(value = "api/quiz/searchQuestionList")
+	public QuestionRes searchQuestionList(@RequestParam int qnId) {
+	    return service.searchQuestionList(qnId);
 	}
-
+	
+	// 回傳問卷數據至DB (12/10修改)
+	@PostMapping(value = "api/quiz/setUser")
+	public QuizResponse setUser(@RequestBody  UserReq userList) {
+		return service.setUser(userList.getUserList()) ;
+	}
+	
+	// 搜尋DB裡的問卷數據，顯示在統計上 
+	@GetMapping(value = "api/quiz/getUser")
+	public UserRes getUser(@RequestParam  int qnId) {
+	    return service.getUser(qnId);
+	}
 
 }

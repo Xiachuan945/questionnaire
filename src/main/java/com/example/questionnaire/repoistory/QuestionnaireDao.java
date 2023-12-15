@@ -25,6 +25,8 @@ public interface QuestionnaireDao extends JpaRepository<Questionnaire, Integer> 
 		public List<Questionnaire> findByIdIn(List<Integer> idList) ;
 		
 		public List<Questionnaire> findByIdInAndPublishedFalse(List<Integer> idList) ;
+		
+//		public List<Questionnaire> findAllByQnId(int id) ;
 
 //		public List<Questionnaire> QuestionnaireRes(String title, LocalDate startDate, LocalDate endDate) ;
 
@@ -168,4 +170,9 @@ public interface QuestionnaireDao extends JpaRepository<Questionnaire, Integer> 
 				@Param("title")String title, 
 				@Param("startDate")LocalDate startDate, 
 				@Param("endDate")LocalDate endDate) ;
+
+		@Modifying(clearAutomatically = true)
+		@Transactional
+		@Query(value = "update Questionnaire set published = true where startDate = :today")
+		public int updateQnStatus(@Param("today") LocalDate today);
 }

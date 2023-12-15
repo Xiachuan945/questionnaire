@@ -8,6 +8,7 @@ public enum RtnCode {
 	QUESTIONNAIRE_ID_PARAM_ERROR (400, "Questionnaire id Param error !") , //	
 	QUESTIONNAIRE_ID_NOT_FOUND (404, "Questionnaire id not found !") , //	
 	UPDATE_ERROR (400, "Update error !") , //	
+	SUBMIT_ERROR (400, "Submit error !") , //	
 	;
 	
 	private int code ;

@@ -8,6 +8,8 @@ import com.example.questionnaire.entity.Questionnaire;
 
 public class QuizResponse {
 
+//	private List<User> uesrList ;
+	
 	private List<QuizVo> quizVoList ;
 	
 	private List<QnQuVo> qnQuVoList ;

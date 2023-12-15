@@ -1,6 +1,7 @@
 package com.example.questionnaire.service.impl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,14 +11,20 @@ import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.example.questionnaire.constants.RtnCode;
 import com.example.questionnaire.entity.Question;
 import com.example.questionnaire.entity.Questionnaire;
+import com.example.questionnaire.entity.User;
 import com.example.questionnaire.repoistory.QuestionDao;
 import com.example.questionnaire.repoistory.QuestionnaireDao;
+import com.example.questionnaire.repoistory.UserDao;
 import com.example.questionnaire.service.ifs.QuizService;
 import com.example.questionnaire.vo.QnQuVo;
 import com.example.questionnaire.vo.QuestionRes;
@@ -25,7 +32,9 @@ import com.example.questionnaire.vo.QuestionnaireRes;
 import com.example.questionnaire.vo.QuizRequest;
 import com.example.questionnaire.vo.QuizResponse;
 import com.example.questionnaire.vo.QuizVo;
+import com.example.questionnaire.vo.UserRes;
 
+@EnableScheduling
 @Service
 public class QuizServiceImpl implements QuizService {
 
@@ -34,6 +43,9 @@ public class QuizServiceImpl implements QuizService {
 
 	@Autowired
 	private QuestionDao quDao;
+
+	@Autowired
+	private UserDao userDao;
 
 	// 新增問卷及題目
 	// 交易。一張表存多筆資料或跨表儲存時，全成功進DB/全失敗皆不進DB。只能用於public，不能用於private，可直接放於class上
@@ -241,7 +253,7 @@ public class QuizServiceImpl implements QuizService {
 			return new QuestionnaireRes(qnList, RtnCode.SUCCESSFUL);
 		}
 	}
-	
+
 //	@Override
 //	public QuestionnaireRes searchQuestionnaireList(String title, LocalDate startDate, LocalDate endDate,
 //			boolean isAll) {
@@ -262,6 +274,7 @@ public class QuizServiceImpl implements QuizService {
 
 	// 模糊搜尋方法 2 (分開寫版本- 題目)
 	// 問卷裡的各個問題
+	@Override
 	public QuestionRes searchQuestionList(int qnId) {
 		if (qnId <= 0) {
 			return new QuestionRes(null, RtnCode.QUESTIONNAIRE_ID_PARAM_ERROR);
@@ -279,8 +292,78 @@ public class QuizServiceImpl implements QuizService {
 	// JOIN：利用不同資料表之間欄位的關連性將結合產出 (= search 找尋的結果)
 	@Override
 	public QuizResponse searchFuzzy(String title, LocalDate startDate, LocalDate endDate) {
-		List <QnQuVo> res = qnDao.selectFuzzy(title, startDate, endDate) ;
+		List<QnQuVo> res = qnDao.selectFuzzy(title, startDate, endDate);
 		return new QuizResponse(null, res, RtnCode.SUCCESSFUL);
+	}
+
+	// 為了前端的前台索取題目生成此實作
+//	@Override
+//	public QuizResponse getQuId(int quId) {
+//	    // 使用 quDao.findById(quId) 取得指定 quId 的問卷
+//	    Optional<Questionnaire> questionnaireOptional = qnDao.findById(quId);
+//
+//	    if (questionnaireOptional.isPresent()) {
+//	        Questionnaire questionnaire = questionnaireOptional.get();
+//
+//	        // 使用問卷的 id 取得相對應的問題列表
+//	        List<Questionnaire> quList = qnDao.findAllByQnId(quId);
+//
+//	        // 建立 QuizVo 對象，將問卷和問題列表設置到其中
+//	        QuizVo vo = new QuizVo();
+//	        vo.setQuestionnaire(questionnaire);
+////	        vo.setQuestionList(quList);
+//
+//	        // 返回 QuizResponse，包含 QuizVo 和成功狀態碼
+//	        return new QuizResponse(Collections.singletonList(vo), RtnCode.SUCCESSFUL);
+//	    } else {
+//	        // 如果找不到指定 quId 的問卷，返回錯誤狀態碼
+//	        return new QuizResponse(Collections.emptyList(), RtnCode.QUESTIONNAIRE_ID_NOT_FOUND);
+//	    }
+//	}
+
+	// 秒分時日月週
+//	@Scheduled(cron = "0/5   *   14   *   *   *")
+//	public void schedule() {
+//		System.out.println(LocalDateTime.now());
+//	}
+
+	// 更新問卷狀態
+//	@Scheduled(cron = "0   *   15   *   *   *")
+//	public void updateQnStatus() {
+//		LocalDate today = LocalDate.now() ;
+//		int res = qnDao.updateQnStatus(today) ;
+//		System.out.println(today);
+//		System.out.println(res);
+//	}
+
+	// 回傳問卷數據至DB
+	@Override
+	public QuizResponse setUser(List<User> userList) {
+		for (User user : userList) {
+			user.setDateTime(LocalDateTime.now());
+		}
+		userDao.saveAll(userList);
+		return new QuizResponse(RtnCode.SUCCESSFUL);
+	}
+
+	// 搜尋DB裡的問卷數據，顯示在統計上
+//	@Override
+//	public QuizResponse getUser(List<User> userList) {
+//		return null;
+//	}
+
+//	@Override
+//	public QuizResponse getUser(int num, String name, LocalDateTime dateTime, String ans) {
+//	return null;
+//	}
+
+	@Override
+	public UserRes getUser(int qnId) {
+		List<User> list = userDao.findAllByQnId(qnId);
+		if (list.isEmpty()) {
+			return new UserRes(null, RtnCode.QUESTIONNAIRE_ID_NOT_FOUND);
+		}
+		return new UserRes(list, RtnCode.SUCCESSFUL);
 	}
 
 }
